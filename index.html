@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistem Informasi Desa Jelapat 1</title>
+  <style>
+    /* SKEMA WARNA: Emerald Green & Modern Gray */
+    :root{
+      --primary: #059669;
+      --primary-dark: #047857;
+      --primary-light: #d1fae5;
+      --bg: #f3f4f6;
+      --sidebar-bg: #111827;
+      --sidebar-text: #e5e7eb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
+    }
+    
+    *{box-sizing:border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif;}
+    body{margin:0; background:var(--bg); color:var(--text); display: flex; min-height: 100vh;}
+
+    /* LAYOUT: SIDEBAR & MAIN CONTENT */
+    #sidebar {
+      width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text);
+      display: flex; flex-direction: column; transition: 0.3s; position: fixed; height: 100vh; z-index: 20;
+    }
+    #sidebar .brand { padding: 20px; background: var(--primary-dark); text-align: center; }
+    #sidebar .brand h2 { margin: 0; font-size: 18px; color: #fff; }
+    #sidebar .brand span { font-size: 11px; opacity: 0.8; color: #fff; }
+    
+    #sidebar .menu { padding: 10px 0; flex: 1; overflow-y: auto;}
+    #sidebar .menu-item {
+      padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+      font-size: 14px; color: #9ca3af; border-left: 4px solid transparent; transition: 0.2s;
+    }
+    #sidebar .menu-item:hover, #sidebar .menu-item.active {
+      background: rgba(255,255,255,0.05); color: #fff; border-left-color: var(--primary);
+    }
+    #sidebar .user-info { padding: 15px 20px; background: rgba(0,0,0,0.2); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.1); }
+
+    #main-content { flex: 1; margin-left: 260px; display: flex; flex-direction: column; width: calc(100% - 260px); }
+
+    .topbar {
+      background: #fff; padding: 15px 24px; display: flex; justify-content: space-between;
+      align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;
+    }
+    .topbar h3 { margin: 0; font-size: 18px; color: var(--text); }
+    .topbar .time-widget { font-weight: 700; color: var(--primary-dark); font-size: 14px; background: #f0fdf4; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--primary-light); }
+    
+    body.is-logged-out #sidebar { display: none; }
+    body.is-logged-out #main-content { margin-left: 0; width: 100%; }
+    body.is-logged-out .topbar { display: none; }
+
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 20px; width: 100%; }
+    .btn {
+      border: none; cursor: pointer; padding: 10px 18px; border-radius: 8px;
+      font-weight: 600; font-size: 13px; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.gray { background: #e5e7eb; color: #374151; }
+    .btn.ok { background: var(--ok); color: #fff; }
+    .btn.warn { background: var(--warn); color: #fff; }
+    .btn.bad { background: var(--bad); color: #fff; }
+    .btn.outline { background: #fff; border: 1px solid #d1d5db; color: #111827; }
+
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; border: 1px solid #f3f4f6; margin-bottom:20px;}
+    .headerline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;}
+    .headerline h2 { margin: 0; font-size: 18px; color: var(--text); }
+    .headerline .hint { font-size: 12px; color: var(--muted); }
+
+    .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    @media (max-width: 900px){ .grid4, .grid3 { grid-template-columns: repeat(2,1fr); } .grid2 { grid-template-columns: 1fr; } }
+    @media (max-width: 768px){ .form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px){ .grid4, .grid3 { grid-template-columns: 1fr; } #sidebar { display:none;} #main-content { margin-left: 0; width: 100%; } }
+
+    label { font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; font-weight: 600; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; outline: none; background: #fff; transition: border-color 0.2s; }
+    textarea { min-height: 90px; resize: none; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .readonly { background: #f9fafb; cursor: not-allowed; color:#6b7280; font-weight:600;}
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8fafc; color: #475569; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 12px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+    tr:hover td { background: #f1f5f9; }
+    
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase;}
+    .b-ok { background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary); }
+    .b-warn { background: #fef3c7; color: #b45309; border: 1px solid var(--warn); }
+    .b-bad { background: #fee2e2; color: #b91c1c; border: 1px solid var(--bad); }
+    .b-gray { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+    .section { display: none; animation: fadeIn 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .notice { padding: 12px 16px; border-radius: 8px; background: var(--primary-light); color: var(--primary-dark); font-size: 13px; border-left: 4px solid var(--primary); margin-top: 10px;}
+    .notice.error { background: #fee2e2; color: #b91c1c; border-left-color: var(--bad); }
+
+    /* LAYOUT LOGIN */
+    .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); }
+    .login-card { background: #fff; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); width: 100%; max-width: 450px; padding: 30px; }
+    .login-header { text-align: center; margin-bottom: 24px; }
+    .login-header h2 { color: var(--primary-dark); margin: 0 0 5px 0; font-size: 24px;}
+    .login-header p { color: var(--muted); font-size: 13px; margin: 0;}
+    .toggle-link { color: var(--primary); cursor: pointer; font-weight: 600; text-decoration: underline; font-size: 13px; text-align: center; display: block; margin-top: 15px;}
+    
+    .stat-card { border-left: 4px solid var(--primary); }
+    .stat-card .val { font-size: 28px; font-weight: 800; color: var(--text); margin: 5px 0;}
+
+    /* TABS UNTUK REPORT DATA */
+    .tab-header { display: flex; background: var(--primary); color: #fff; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+    .tab-header .tab { padding: 14px 20px; cursor: pointer; font-weight: 600; font-size: 14px; opacity: 0.8; transition: 0.2s; border-bottom: 3px solid transparent; }
+    .tab-header .tab:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+    .tab-header .tab.active { opacity: 1; background: var(--primary-dark); border-bottom: 3px solid var(--ok); }
+
+    /* PREVIEW OVERLAYS */
+    #previewOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;padding:20px;overflow:auto}
+    #previewCard{max-width:850px;margin:20px auto;background:#fff;border-radius:8px;padding:20px;box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);}
+    #suratCetak{ padding:30px; font-family:"Times New Roman", Times, serif; color:#000; line-height: 1.5;}
+    
+    @media print{
+      body *{visibility:hidden}
+      #previewOverlay, #previewOverlay *{visibility:visible}
+      #previewOverlay{position:fixed; left:0; top:0; width:100%; height:100%; background:none; padding:0; overflow: visible;}
+      #previewCard{box-shadow:none;border-radius:0; margin:0; padding:0;}
+      #previewActions{display:none !important}
+      /* Ensure printed tables from reports look neat */
+      #suratCetak table { width:100%; border-collapse: collapse; margin-top: 20px; font-family: Arial, sans-serif;}
+      #suratCetak th, #suratCetak td { border: 1px solid #333; padding: 8px; font-size: 12px; }
+      #suratCetak th { background-color: #f0f0f0 !important; -webkit-print-color-adjus: exact; }
+    }
+  </style>
+</head>
+
+<body class="is-logged-out">
+
+  <aside id="sidebar">
+    <div class="brand">
+      <h2>DESA JELAPAT 1</h2>
+      <span>Sistem Informasi Desa Terpadu</span>
+    </div>
+    <div class="user-info">
+      <div id="sideUserName" style="font-weight:bold; color:#fff;">-</div>
+      <div id="sideUserRole" style="color:var(--primary-light); font-size: 11px; text-transform: uppercase;">-</div>
+    </div>
+    <div class="menu">
+      
+      <div id="menuUserArea" style="display:none;">
+        <div class="menu-item" onclick="go('dashboard')" data-menu="dashboard">🏠 Dashboard</div>
+        <div class="menu-item" onclick="go('pengajuan')" data-menu="pengajuan">📝 Pengajuan Surat</div>
+        <div class="menu-item" onclick="go('pengaduan')" data-menu="pengaduan">🗣️ Pengaduan Warga</div>
+        <div class="menu-item" onclick="go('cetak')" data-menu="cetak">🖨️ Cetak Dokumen</div>
+        <div class="menu-item" onclick="go('laporan')" data-menu="laporan">📊 Laporan & Statistik</div>
+      </div>
+      
+      <div id="menuAdminArea" style="display:none;">
+        <div class="menu-item" onclick="go('dashboard')" data-menu="dashboard">🏠 Dashboard</div>
+        
+        <div style="padding: 10px 20px; font-size:11px; color:#6b7280; font-weight:bold; margin-top:10px;">FORM INPUT DATA</div>
+        <div class="menu-item" onclick="go('penduduk')" data-menu="penduduk">✍️ Input Penduduk</div>
+        <div class="menu-item" onclick="go('bansos')" data-menu="bansos">✍️ Input Bansos</div>
+        <div class="menu-item" onclick="go('surat')" data-menu="surat">✍️ Input Surat</div>
+        <div class="menu-item" onclick="go('registrasi')" data-menu="registrasi">✍️ Input Akun User</div>
+        
+        <div style="padding: 10px 20px; font-size:11px; color:#6b7280; font-weight:bold; margin-top:10px;">MANAJEMEN & REPORT</div>
+        <div class="menu-item" onclick="go('report')" data-menu="report">📁 Report Data Master</div>
+        <div class="menu-item" onclick="go('verifikasi')" data-menu="verifikasi">✅ Verifikasi Berkas</div>
+        <div class="menu-item" onclick="go('pengaduan')" data-menu="pengaduan">🗣️ Laporan Aduan Warga</div>
+        <div class="menu-item" onclick="go('laporan')" data-menu="laporan">📊 Laporan & Statistik</div>
+        <div class="menu-item" onclick="go('keamanan')" data-menu="keamanan">🔐 Log & Keamanan</div>
+      </div>
+      
+    </div>
+    <div style="padding: 20px;">
+        <button class="btn outline" style="width:100%; justify-content:center; background: rgba(255,255,255,0.1); color:#fff; border:none;" onclick="logout()">🚪 Keluar</button>
+    </div>
+  </aside>
+
+  <main id="main-content">
+    
+    <header class="topbar">
+      <h3 id="pageTitle">Dashboard</h3>
+      <div class="time-widget" id="realTimeClock">Memuat Waktu...</div>
+    </header>
+
+    <section id="login" class="section active" style="padding:0; margin:0;">
+      <div class="login-wrapper">
+        <div class="login-card">
+          <div id="formLoginArea">
+            <div class="login-header">
+              <h2>Selamat Datang</h2>
+              <p>Sistem Pelayanan Administrasi Desa Jelapat 1</p>
+            </div>
+            <div>
+              <label>Username</label>
+              <input id="loginUser" placeholder="Masukkan username" style="margin-bottom:12px;" />
+              <label>Password</label>
+              <input id="loginPass" type="password" placeholder="Masukkan password" style="margin-bottom:12px;" />
+              <label>Masuk Sebagai</label>
+              <select id="loginRole" style="margin-bottom:20px;">
+                <option value="user">Masyarakat (Warga)</option>
+                <option value="admin">Staf / Admin Desa</option>
+              </select>
+              <button class="btn primary" style="width:100%; justify-content:center; padding:12px;" onclick="doLogin(event)">🔑 Masuk Sistem</button>
+            </div>
+            <a class="toggle-link" onclick="toggleAuthForm('register')">Belum punya akun? Daftar mandiri di sini.</a>
+            <div class="notice" style="margin-top:20px; font-size:12px; text-align:center; background:#f8fafc; border:none; color:#64748b;">
+              Hint: <b>admin/admin123</b> atau <b>user/user123</b>
+            </div>
+          </div>
+
+          <div id="formRegisterArea" style="display:none;">
+            <div class="login-header">
+              <h2>Daftar Akun Baru</h2>
+              <p>Lengkapi data diri Anda untuk layanan online</p>
+            </div>
+            <div style="max-height: 60vh; overflow-y: auto; padding-right:5px;">
+              <label>NIK</label><input id="pubNik" placeholder="16 Digit NIK" style="margin-bottom:12px;" />
+              <label>Nama Lengkap</label><input id="pubNama" placeholder="Nama Lengkap" style="margin-bottom:12px;" />
+              <label>Nomor HP</label><input id="pubTelp" placeholder="08xxxxxxxxxx" style="margin-bottom:12px;" />
+              <label>Alamat</label><textarea id="pubAlamat" placeholder="Alamat di Jelapat 1" style="margin-bottom:12px; height:60px;"></textarea>
+              <label>Buat Username</label><input id="pubUser" placeholder="Username untuk login" style="margin-bottom:12px;" />
+              <label>Buat Password</label><input id="pubPass" type="password" placeholder="Password" style="margin-bottom:20px;" />
+              <button class="btn primary" style="width:100%; justify-content:center; padding:12px;" onclick="doPublicRegister(event)">📝 Daftar Sekarang</button>
+              <a class="toggle-link" onclick="toggleAuthForm('login')">Sudah punya akun? Kembali ke Login.</a>
+            </div>
+            <div id="pubRegMsg" class="notice error" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container" id="appContentWrap">
+
+      <section id="dashboard" class="section">
+        
+        <div id="adminDashboardView" style="display:none; margin-bottom:24px;">
+            <div class="card" style="border-left: 4px solid var(--warn); background: #fffbeb;">
+                <div class="headerline" style="border-bottom:none; margin-bottom:0;">
+                    <div>
+                        <h2 style="color: #b45309; font-size:20px;">Antrean Verifikasi Dokumen</h2>
+                        <p style="margin:5px 0 0; font-size:14px; color:#92400e;">Saat ini terdapat <b id="adminPendingCount" style="font-size:18px; color:var(--bad);">0</b> pengajuan surat warga yang menunggu persetujuan Anda.</p>
+                    </div>
+                    <button class="btn warn" onclick="go('verifikasi')">Tinjau Berkas ➡️</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid3" style="margin-bottom: 24px;">
+          <div class="card stat-card">
+            <div class="sub">Total Penduduk Terdaftar</div>
+            <div class="val" id="jumlahPenduduk">0</div>
+            <div class="sub" style="color:var(--primary)">Desa Jelapat 1</div>
+          </div>
+          <div class="card stat-card" style="border-left-color: var(--warn);">
+            <div class="sub">Jam Layanan Kantor</div>
+            <div class="val" style="font-size:22px; margin-top:10px;">08.00 - 14.00</div>
+            <div class="sub">Senin - Jumat</div>
+          </div>
+          <div class="card stat-card" style="border-left-color: var(--ok);">
+            <div class="sub">Status Server & Sistem</div>
+            <div class="val" style="font-size:22px; margin-top:10px; color:var(--ok);">Online</div>
+            <div class="sub">Siap Melayani</div>
+          </div>
+        </div>
+
+        <div id="userDashboardView" style="display:none;">
+            <div class="card">
+              <div class="headerline"><h2>Pintasan Layanan Tercepat</h2></div>
+              <div class="grid4">
+                <button class="btn gray" style="flex-direction:column; padding:20px; gap:10px; background:#f8fafc; border:1px solid #e2e8f0;" onclick="go('pengajuan')">
+                  <span style="font-size:28px;">📝</span><span>Buat Pengajuan</span>
+                </button>
+                <button class="btn gray" style="flex-direction:column; padding:20px; gap:10px; background:#f8fafc; border:1px solid #e2e8f0;" onclick="go('pengaduan')">
+                  <span style="font-size:28px;">🗣️</span><span>Lapor Keluhan</span>
+                </button>
+                <button class="btn gray" style="flex-direction:column; padding:20px; gap:10px; background:#f8fafc; border:1px solid #e2e8f0;" onclick="go('cetak')">
+                  <span style="font-size:28px;">🖨️</span><span>Cetak Dokumen</span>
+                </button>
+                <button class="btn gray" style="flex-direction:column; padding:20px; gap:10px; background:#f8fafc; border:1px solid #e2e8f0;" onclick="go('laporan')">
+                  <span style="font-size:28px;">📊</span><span>Lihat Riwayat</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <div class="headerline">
+                    <h2>Lacak Status Pengajuan Terakhir</h2>
+                    <span class="hint">Pantau proses dokumen Anda tanpa berpindah halaman</span>
+                </div>
+                <div id="dashTrackingContent"></div>
+            </div>
+        </div>
+      </section>
+
+      <section id="penduduk" class="section">
+        <div class="card">
+          <div class="headerline">
+            <h2>Form Input Data Penduduk</h2>
+            <span class="hint">Khusus Admin: Mendata warga desa (Tabel data ada di menu Report Data)</span>
+          </div>
+          <div class="form-grid">
+            <div><label>NIK</label><input id="pdNik" placeholder="16 Digit NIK" /></div>
+            <div><label>Nama Lengkap</label><input id="pdNama" placeholder="Sesuai KTP" /></div>
+            <div>
+              <label>Jenis Kelamin</label>
+              <select id="pdJK"><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select>
+            </div>
+            <div>
+              <label>Tempat, Tanggal Lahir</label>
+              <div style="display:flex; gap:10px;">
+                <input id="pdTempat" placeholder="Tempat" style="flex:1;" />
+                <input id="pdTglLahir" type="date" style="flex:1;" />
+              </div>
+            </div>
+            <div><label>Agama</label><select id="pdAgama"><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option></select></div>
+            <div><label>Pekerjaan</label><input id="pdKerja" placeholder="Contoh: Wiraswasta" /></div>
+            <div style="grid-column: 1/-1;"><label>Alamat Lengkap (RT/RW)</label><input id="pdAlamat" placeholder="Alamat lengkap di Desa Jelapat 1" /></div>
+          </div>
+          <div style="margin-top:20px; text-align:right;">
+            <button class="btn primary" onclick="savePenduduk(event)">💾 Simpan Data Penduduk</button>
+          </div>
+          <div class="notice" id="pdMsg" style="display:none"></div>
+        </div>
+      </section>
+
+      <section id="bansos" class="section">
+        <div class="card">
+          <div class="headerline">
+            <h2>Form Pendataan Bantuan Sosial</h2>
+            <span class="hint">Khusus Admin: Mendata penerima Bansos (Tabel data ada di menu Report Data)</span>
+          </div>
+          <div class="form-grid">
+            <div><label>NIK Penerima (Auto-search)</label><input id="bsNik" placeholder="Ketik 16 Digit NIK" oninput="autofillBansos()" /></div>
+            <div><label>Nama Penerima (Otomatis)</label><input id="bsNama" placeholder="Otomatis dari Master Data..." class="readonly" readonly /></div>
+            <div>
+              <label>Jenis Bantuan</label>
+              <select id="bsJenis"><option>BLT Dana Desa</option><option>PKH</option><option>Bansos Sembako</option><option>Bedah Rumah</option></select>
+            </div>
+            <div><label>Periode Pembagian</label><input id="bsPeriode" placeholder="Contoh: April 2026" /></div>
+            <div style="grid-column: 1/-1;"><label>Keterangan / Jumlah</label><input id="bsKet" placeholder="Contoh: Rp 300.000 / Selesai disalurkan" /></div>
+          </div>
+          <div style="margin-top:20px; text-align:right;">
+            <button class="btn primary" onclick="saveBansos(event)">💾 Simpan Data Bansos</button>
+          </div>
+          <div class="notice" id="bsMsg" style="display:none"></div>
+        </div>
+      </section>
+
+      <section id="surat" class="section">
+        <div class="card">
+          <div class="headerline">
+            <h2>Form Pencatatan Surat Masuk & Keluar</h2>
+            <span class="hint">Khusus Admin: Mencatat arsip internal (Tabel data ada di menu Report Data)</span>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label>Kategori Surat</label>
+              <select id="smkKategori"><option value="Surat Masuk">Surat Masuk</option><option value="Surat Keluar">Surat Keluar</option></select>
+            </div>
+            <div><label>Nomor Surat</label><input id="smkNo" placeholder="No. Surat Resmi" /></div>
+            <div><label>Tanggal Surat</label><input id="smkTgl" type="date" /></div>
+            <div><label>Pengirim / Tujuan</label><input id="smkPihak" placeholder="Instansi/Pihak terkait" /></div>
+            <div style="grid-column: 1/-1;"><label>Perihal / Ringkasan</label><input id="smkPerihal" placeholder="Isi ringkas surat" /></div>
+          </div>
+          <div style="margin-top:20px; text-align:right;">
+            <button class="btn primary" onclick="saveSurat(event)">💾 Simpan Arsip Surat</button>
+          </div>
+          <div class="notice" id="smkMsg" style="display:none"></div>
+        </div>
+      </section>
+      
+      <section id="registrasi" class="section">
+        <div class="card">
+          <div class="headerline">
+              <h2>Form Registrasi Akun Pengguna</h2>
+              <span class="hint">Khusus Admin: Membuat akses sistem (Tabel data ada di menu Report Data)</span>
+          </div>
+          <div class="form-grid">
+            <div><label>Nama Lengkap</label><input id="rNama" /></div>
+            <div><label>NIK</label><input id="rNik" /></div>
+            <div><label>Role</label><select id="rRole"><option value="user">User (Warga)</option><option value="admin">Admin</option></select></div>
+            <div><label>Username</label><input id="rUser" /></div>
+            <div><label>Password</label><input id="rPass" type="password" /></div>
+          </div>
+          <div style="margin-top: 20px; text-align:right;">
+            <button class="btn primary" onclick="saveUser(event)">💾 Simpan Akun Baru</button>
+          </div>
+          <div class="notice" id="regMsg" style="display:none"></div>
+        </div>
+      </section>
+
+      <section id="report" class="section">
+        <div class="card" style="padding:0; overflow:hidden;">
+            <div class="tab-header">
+                <div class="tab active" onclick="switchReportTab(event, 'rep-penduduk')">👥 Data Penduduk</div>
+                <div class="tab" onclick="switchReportTab(event, 'rep-bansos')">🎁 Data Bansos</div>
+                <div class="tab" onclick="switchReportTab(event, 'rep-surat')">✉️ Agenda Surat</div>
+                <div class="tab" onclick="switchReportTab(event, 'rep-akun')">⚙️ Data Akun</div>
+            </div>
+            
+            <div style="padding:20px;">
+                <div id="rep-penduduk" class="rep-tab" style="display:block;">
+                    <div class="headerline">
+                        <h2>Tabel Master Data Penduduk</h2>
+                        <div>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblPenduduk', 'Laporan_Data_Penduduk')">⬇️ Excel</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblPenduduk', 'Laporan Master Data Penduduk')">🖨️ PDF</button>
+                        </div>
+                    </div>
+                    <div style="overflow:auto; max-height:600px;">
+                        <table id="tblPenduduk">
+                            <thead><tr><th>NIK</th><th>Nama Lengkap</th><th>L/P</th><th>Agama</th><th>Pekerjaan</th><th>Alamat</th></tr></thead>
+                            <tbody id="pendudukTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="rep-bansos" class="rep-tab" style="display:none;">
+                    <div class="headerline">
+                        <h2>Tabel Penerima Bantuan Sosial</h2>
+                        <div>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblBansos', 'Laporan_Data_Bansos')">⬇️ Excel</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblBansos', 'Laporan Penerima Bantuan Sosial')">🖨️ PDF</button>
+                        </div>
+                    </div>
+                    <div style="overflow:auto; max-height:600px;">
+                        <table id="tblBansos">
+                            <thead><tr><th>Nama Penerima</th><th>NIK</th><th>Jenis Bantuan</th><th>Periode</th><th>Keterangan</th></tr></thead>
+                            <tbody id="bansosTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="rep-surat" class="rep-tab" style="display:none;">
+                    <div class="headerline">
+                        <h2>Tabel Arsip Surat Masuk & Keluar</h2>
+                        <div>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblSurat', 'Laporan_Surat_Masuk_Keluar')">⬇️ Excel</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblSurat', 'Laporan Agenda Surat Masuk & Keluar')">🖨️ PDF</button>
+                        </div>
+                    </div>
+                    <div style="overflow:auto; max-height:600px;">
+                        <table id="tblSurat">
+                            <thead><tr><th>Kategori</th><th>Nomor Surat</th><th>Tanggal</th><th>Pengirim/Tujuan</th><th>Perihal</th></tr></thead>
+                            <tbody id="suratTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="rep-akun" class="rep-tab" style="display:none;">
+                    <div class="headerline">
+                        <h2>Tabel Akun Pengguna Sistem</h2>
+                        <div>
+                            <button class="btn bad" style="font-size:12px; padding:6px 12px; margin-right:15px;" onclick="seedDemo()">⚠️ Reset & Generate Data</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblAkun', 'Laporan_Data_Akun')">⬇️ Excel</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblAkun', 'Laporan Data Akun Pengguna')">🖨️ PDF</button>
+                        </div>
+                    </div>
+                    <div style="overflow:auto; max-height:600px;">
+                        <table id="tblAkun">
+                            <thead><tr><th>Nama Lengkap</th><th>NIK</th><th>Role</th><th>Username</th></tr></thead>
+                            <tbody id="userTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      <section id="verifikasi" class="section">
+        <div class="grid2">
+            <div class="card">
+              <div class="headerline"><h2>Panel Verifikasi Berkas</h2></div>
+              <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input id="vCariNo" placeholder="No. Pengajuan (PL-...)" style="flex:1;" />
+                <button class="btn primary" onclick="loadVerifikasi()">Tarik Data</button>
+              </div>
+              <div class="notice" id="verMsg" style="display:none; margin-bottom:15px;"></div>
+              
+              <div class="form-grid" style="grid-template-columns: 1fr;">
+                <div><label>Pemohon & Nomor</label><input id="vNama" class="readonly" readonly style="margin-bottom:8px;"/><input id="vNo" class="readonly" readonly /></div>
+                <div>
+                  <label>Berkas Syarat Wajib Warga</label>
+                  <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; font-size:13px; color:var(--primary-dark);" id="vDokumenList">
+                     (Cari data permohonan terlebih dahulu)
+                  </div>
+                </div>
+                <div>
+                  <label>Keputusan Desa</label>
+                  <select id="vStatusSet" style="font-weight:bold; border-color:var(--primary);">
+                    <option value="">- Pilih Keputusan -</option>
+                    <option value="Disetujui">✅ Setuju & Terbitkan PDF (Otomatis)</option>
+                    <option value="Ditolak">❌ Tolak / Kembalikan Berkas</option>
+                  </select>
+                  <div style="font-size:11px; color:var(--warn); margin-top:5px;">*Jika disetujui, surat akan langsung berstatus Selesai/Terbit.</div>
+                </div>
+                <div><label>Catatan Petugas</label><textarea id="vCat" placeholder="Tulis alasan jika ditolak..."></textarea></div>
+                <div><label>Nama / Tanda Tangan Kades</label><input id="vTTD" value="Kepala Desa Jelapat 1" /></div>
+              </div>
+              <button class="btn ok" style="width:100%; margin-top:20px; font-size:15px; padding:12px;" onclick="saveVerifikasi(event)">Validasi & Simpan Keputusan</button>
+            </div>
+
+            <div class="card" style="align-self:start;">
+              <div class="headerline"><h2>Antrean Pengajuan Baru</h2></div>
+              <div style="overflow:auto; max-height: 500px;">
+                <table><thead><tr><th>Nomor</th><th>Pemohon</th><th>Status</th></tr></thead><tbody id="verTable"></tbody></table>
+              </div>
+            </div>
+        </div>
+      </section>
+
+      <section id="pengajuan" class="section">
+        <div class="card">
+          <div class="headerline">
+            <h2>Form Pengajuan Surat</h2>
+            <span class="hint">Isi data dan wajib melampirkan berkas sesuai syarat.</span>
+          </div>
+          <div class="form-grid">
+            <div><label>Nomor Registrasi</label><input id="pNo" class="readonly" readonly /></div>
+            <div><label>Tanggal Pengajuan</label><input id="pTgl" class="readonly" readonly /></div>
+            <div style="grid-column: 1/-1;">
+              <label>Pilih Jenis Layanan</label>
+              <select id="pJenis" onchange="updateSyarat()" style="font-weight:bold; color:var(--primary-dark);">
+                <option value="">-- Pilih Layanan --</option>
+                <option>Surat Keterangan Domisili</option>
+                <option>Surat Pengantar</option>
+                <option>Surat Keterangan Usaha</option>
+                <option>Surat Keterangan Tidak Mampu</option>
+              </select>
+            </div>
+            <div><label>Nama Lengkap</label><input id="pNama" class="readonly" readonly /></div>
+            <div><label>NIK</label><input id="pNik" class="readonly" readonly /></div>
+            <div><label>Alamat Lengkap</label><textarea id="pAlamat"></textarea></div>
+            <div><label>Tujuan / Keperluan Surat</label><textarea id="pTujuan"></textarea></div>
+            
+            <div style="grid-column: 1/-1; background:#fffbeb; padding:15px; border-radius:8px; border:1px solid #fde68a;">
+              <label>Upload Dokumen Persyaratan (WAJIB - Image/KTP/KK)</label>
+              <input type="file" id="pDok" accept="image/*" style="background:#fff; border:1px solid #ccc; padding:6px;" />
+              <div id="pDokHint" style="margin-top:8px; font-size:12px; color:#b45309;">
+                Pilih jenis layanan untuk melihat syarat berkas yang wajib diupload.
+              </div>
+            </div>
+          </div>
+          <div style="margin-top: 24px; display:flex; justify-content:center;">
+            <button class="btn primary" style="font-size:15px; padding:12px 30px;" onclick="submitPengajuan(event)">Ajukan Surat Sekarang 📨</button>
+          </div>
+          <div class="notice" id="pengMsg" style="display:none"></div>
+        </div>
+      </section>
+
+      <section id="cetak" class="section">
+        <div class="card">
+          <div class="headerline">
+            <h2>Dokumen Siap Unduh</h2>
+            <span class="hint" style="color:var(--primary-dark); font-weight:bold;">Sistem Penerbitan Otomatis Aktif. Klik "Unduh PDF" untuk menyimpan surat ke HP/PC Anda.</span>
+          </div>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>No Pengajuan</th>
+                  <th>Layanan</th>
+                  <th>Tgl Terbit</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="cetakTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="pengaduan" class="section">
+        
+        <div class="card" id="formPengaduanWarga" style="display:none;">
+          <div class="headerline">
+            <h2>Kirim Pengaduan / Keluhan Warga</h2>
+            <span class="hint">Laporkan fasilitas rusak atau masalah desa dengan bukti foto otentik.</span>
+          </div>
+          <div class="form-grid">
+            <div style="grid-column: 1/-1;"><label>Judul Laporan</label><input id="adJudul" placeholder="Contoh: Jalan rusak parah di RT 05" /></div>
+            <div style="grid-column: 1/-1;"><label>Deskripsi Detail</label><textarea id="adDeskripsi" placeholder="Jelaskan titik lokasi dan kronologinya..."></textarea></div>
+            <div style="grid-column: 1/-1; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+              <label>Upload Bukti Foto Laporan (WAJIB)</label>
+              <input type="file" id="adFoto" accept="image/*" style="background:#fff; border:1px solid #ccc; padding:6px;" />
+              <div style="margin-top:5px; font-size:12px; color:var(--muted);">Silakan upload foto lokasi atau kejadian untuk diverifikasi petugas.</div>
+            </div>
+          </div>
+          <div style="margin-top:20px; text-align:right;">
+            <button class="btn primary" onclick="submitPengaduan(event)">Kirim Laporan Pengaduan 📨</button>
+          </div>
+          <div class="notice" id="adMsg" style="display:none"></div>
+        </div>
+
+        <div class="card">
+          <div class="headerline"><h2 id="titleTabelAduan">Laporan Terkirim</h2></div>
+          <div style="overflow:auto">
+            <table>
+              <thead><tr><th>Tanggal</th><th>Judul & Pelapor</th><th>Bukti Lampiran</th><th>Deskripsi</th></tr></thead>
+              <tbody id="pengaduanTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="laporan" class="section">
+        <div class="grid4" style="margin-bottom: 20px;">
+          <div class="card stat-card"><div class="sub">Total Pengajuan</div><div class="val" id="kpiTotal">0</div></div>
+          <div class="card stat-card" style="border-color:var(--primary-dark)"><div class="sub">Sering Diajukan</div><div class="val" id="kpiTop" style="font-size:18px; margin-top:15px;">-</div></div>
+          <div class="card stat-card" style="border-color:var(--warn)"><div class="sub">Status Selesai</div><div class="val" id="kpiAvg">0</div></div>
+          <div class="card stat-card" style="border-color:var(--ok)"><div class="sub">Menunggu Diproses</div><div class="val" id="kpiAktif">0</div></div>
+        </div>
+        <div class="card">
+          <div class="headerline">
+            <h2>Rekapitulasi Layanan Desa</h2>
+            <div>
+               <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblLaporan', 'Laporan_Layanan_Desa')">⬇️ Excel</button>
+               <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblLaporan', 'Rekapitulasi Data Layanan Surat Desa')">🖨️ PDF</button>
+            </div>
+          </div>
+          <div style="overflow:auto">
+            <table id="tblLaporan">
+              <thead><tr><th>No Ref</th><th>Pemohon</th><th>Layanan</th><th>Tgl Masuk</th><th>Status</th><th>Selesai</th></tr></thead>
+              <tbody id="lapTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="keamanan" class="section">
+        <div class="grid2">
+          <div class="card">
+            <div class="headerline"><h2>Jejak Akses Sistem (Logs)</h2></div>
+            <div style="overflow:auto; max-height:400px;">
+              <table><thead><tr><th>Pengguna</th><th>Akses</th><th>Waktu Aktivitas</th></tr></thead><tbody id="logTable"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <div id="previewOverlay">
+    <div id="previewCard">
+      <div id="suratCetakWrap" style="display:flex; justify-content:center;">
+        <div id="suratCetak" style="border:1px solid #e2e8f0; box-shadow:none; width:100%; max-width:800px; background:#fff;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="imagePreviewOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.8); z-index:10000; padding:20px; align-items:center; justify-content:center; flex-direction:column;">
+    <div style="background:#fff; padding:15px; border-radius:8px; max-width:90%; max-height:90%; display:flex; flex-direction:column;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 id="imagePreviewTitle" style="margin:0; font-size:16px;">Preview Lampiran</h3>
+        <button class="btn outline" onclick="closeImagePreview()" style="padding:5px 10px;">✖ Tutup</button>
+      </div>
+      <div style="overflow:auto; text-align:center;">
+        <img id="imagePreviewImg" src="" style="max-width:100%; max-height:70vh; object-fit:contain; border-radius:4px;" />
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   JAM DIGITAL REAL-TIME
+   ========================================================= */
+function updateClock() {
+    const clockElement = document.getElementById("realTimeClock");
+    if(!clockElement) return;
+    
+    const now = new Date();
+    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    
+    const dayName = days[now.getDay()];
+    const date = String(now.getDate()).padStart(2, '0');
+    const monthName = months[now.getMonth()];
+    const year = now.getFullYear();
+    const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    
+    clockElement.innerHTML = `${dayName}, ${date} ${monthName} ${year} - ${time}`;
+}
+setInterval(updateClock, 1000);
+
+/* =========================================================
+   STORAGE KEYS & UTILS
+   ========================================================= */
+const PREFIX = "desa_v10_";
+const LS_USERS = PREFIX+"users", LS_APPS = PREFIX+"apps", LS_AUTH = PREFIX+"auth", LS_LOGS = PREFIX+"logs";
+const LS_PENDUDUK = PREFIX+"penduduk", LS_PENGADUAN = PREFIX+"pengaduan", LS_BANSOS = PREFIX+"bansos", LS_SURAT = PREFIX+"surat";
+
+function nowISODate(){ const d=new Date(); const tz=new Date(d.getTime() - d.getTimezoneOffset()*60000); return tz.toISOString().slice(0,10); }
+function nowText(){ return new Date().toLocaleString("id-ID"); }
+
+function getData(key){ return JSON.parse(localStorage.getItem(key) || "[]"); }
+function setData(key, v){ localStorage.setItem(key, JSON.stringify(v)); }
+function getSession(){ return JSON.parse(localStorage.getItem(LS_AUTH) || "null"); }
+function setSession(v){ localStorage.setItem(LS_AUTH, JSON.stringify(v)); }
+
+function badgeHTML(status){
+  const s = (status||"").toLowerCase();
+  if(s.includes("selesai")) return `<span class="badge b-ok">SELESAI / TERBIT</span>`;
+  if(s.includes("ditolak")) return `<span class="badge b-bad">DITOLAK</span>`;
+  if(s.includes("proses")) return `<span class="badge b-warn">PROSES</span>`;
+  return `<span class="badge b-gray">${status.toUpperCase()||"-"}</span>`;
+}
+function showMsg(id, text, isError=false){
+  const el = document.getElementById(id); el.style.display = "block"; el.innerHTML = text;
+  if(isError) el.classList.add("error"); else el.classList.remove("error");
+}
+function hideMsg(id){ document.getElementById(id).style.display = "none"; }
+
+/* =========================================================
+   FUNGSI UNDUH EXCEL & PDF (UNTUK REPORT & TABEL)
+   ========================================================= */
+function exportTableToCSV(tableId, filename) {
+    let table = document.getElementById(tableId);
+    let rows = table.querySelectorAll("tr");
+    let csv = [];
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll("td, th");
+        for (let j = 0; j < cols.length; j++) {
+            // Hilangkan enter dan quote ganda agar CSV tidak rusak
+            let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
+            row.push('"' + text + '"');
+        }
+        csv.push(row.join(","));
+    }
+    
+    let csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+    let downloadLink = document.createElement("a");
+    downloadLink.download = filename + ".csv";
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+
+function printTable(tableId, title) {
+    let tableHTML = document.getElementById(tableId).outerHTML;
+    
+    // Kop Standar Laporan
+    let kop = `
+      <div class="center" style="margin-bottom:20px; text-align:center;">
+        <h3 style="margin:0; font-size:20px; text-transform:uppercase;">PEMERINTAH DESA JELAPAT 1</h3>
+        <p style="margin:5px 0 10px;">Kecamatan Tamban, Kabupaten Barito Kuala</p>
+        <div class="line" style="border-top:3px solid #000; margin:5px 0 2px;"></div>
+        <div class="line2" style="border-top:1px solid #000;"></div>
+      </div>
+      <h2 style="text-align:center; font-size:16px; margin-bottom:20px;">${title}</h2>
+    `;
+    
+    document.getElementById("suratCetak").innerHTML = kop + tableHTML;
+    
+    // Tampilkan Overlay Print
+    const overlay = document.getElementById("previewOverlay");
+    overlay.style.display = "block"; 
+    
+    // Auto Print
+    setTimeout(() => {
+        window.print();
+        overlay.style.display = "none";
+        document.getElementById("suratCetak").innerHTML = ""; // Bersihkan
+    }, 400);
+}
+
+/* =========================================================
+   NAVIGATION & UI STATE
+   ========================================================= */
+function go(page){
+  const s = getSession(); if(page !== "login" && !s){ page = "login"; }
+
+  const adminOnly = ["penduduk", "bansos", "surat", "registrasi", "verifikasi", "keamanan", "report"];
+  if(adminOnly.includes(page) && s?.role !== "admin"){ alert("Akses ditolak. Area Administrator."); page = "dashboard"; return;}
+  
+  const userOnly = ["pengajuan", "cetak"];
+  if(userOnly.includes(page) && s?.role === "admin"){ alert("Halaman ini khusus masyarakat (User)."); page = "dashboard"; return;}
+
+  document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+  
+  const titles = { dashboard: "Dashboard", pengajuan: "Pengajuan Surat", cetak: "Unduh Dokumen", laporan: "Laporan Pelayanan", pengaduan: "Laporan & Aduan", penduduk: "Input Data Penduduk", bansos: "Input Bantuan Sosial", surat: "Input Surat Masuk/Keluar", registrasi: "Input Akun Pengguna", verifikasi: "Verifikasi Berkas", keamanan: "Keamanan Sistem", report: "Report Data Master"};
+  document.getElementById("pageTitle").textContent = titles[page] || "Sistem Desa";
+
+  document.querySelectorAll("#sidebar .menu-item").forEach(m => m.classList.remove("active"));
+  document.querySelectorAll(`#sidebar .menu-item[data-menu='${page}']`).forEach(el => el.classList.add("active"));
+
+  // Rendering Functions
+  if(page==="dashboard") refreshDashboard();
+  if(page==="pengajuan") prepPengajuan();
+  if(page==="pengaduan") renderPengaduan();
+  if(page==="verifikasi") renderVerList();
+  if(page==="laporan") renderLaporan();
+  if(page==="keamanan") renderLogs();
+  if(page==="cetak") renderCetakTable();
+  
+  if(page==="report") {
+      renderPenduduk();
+      renderBansos();
+      renderSurat();
+      renderUsers();
+  }
+}
+
+function switchReportTab(event, tabId) {
+    document.querySelectorAll('.rep-tab').forEach(el => el.style.display = 'none');
+    document.getElementById(tabId).style.display = 'block';
+    document.querySelectorAll('.tab-header .tab').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+/* =========================================================
+   AUTH LOGIC
+   ========================================================= */
+function toggleAuthForm(target) {
+    document.getElementById('formLoginArea').style.display = target==='login'?'block':'none';
+    document.getElementById('formRegisterArea').style.display = target==='register'?'block':'none';
+    hideMsg('pubRegMsg');
+}
+function doPublicRegister(e) {
+    e.preventDefault();
+    const nik = document.getElementById("pubNik").value.trim(), nama = document.getElementById("pubNama").value.trim(), telp = document.getElementById("pubTelp").value.trim(), alamat = document.getElementById("pubAlamat").value.trim(), user = document.getElementById("pubUser").value.trim(), pass = document.getElementById("pubPass").value.trim();
+    if(!nik || !nama || !user || !pass) { showMsg("pubRegMsg", "Lengkapi NIK, Nama, Username, Password.", true); return; }
+    const users = getData(LS_USERS);
+    if(users.some(x => x.username === user)){ showMsg("pubRegMsg", "Username terpakai.", true); return; }
+    users.push({nama, nik, telp, alamat, role: "user", username: user, password: pass});
+    setData(LS_USERS, users); alert("Pendaftaran Berhasil! Silakan masuk."); toggleAuthForm('login');
+}
+function doLogin(e){
+  e.preventDefault();
+  const u = document.getElementById("loginUser").value.trim(), p = document.getElementById("loginPass").value.trim(), r = document.getElementById("loginRole").value;
+  const users = getData(LS_USERS), found = users.find(x => x.username===u && x.password===p && x.role===r);
+  if(!found){ alert("Kredensial salah. Periksa username, password, dan hak akses."); return; }
+  setSession({username: found.username, nama: found.nama, role: found.role, loginAt: nowText()});
+  const logs = getData(LS_LOGS); logs.unshift({user: found.nama, role: found.role, waktu: nowText()}); setData(LS_LOGS, logs);
+  refreshUIState(); go("dashboard");
+}
+function logout(){ setSession(null); refreshUIState(); go("login"); }
+
+function refreshUIState(){
+  const s = getSession(); const body = document.body;
+  if(!s){
+    body.classList.add("is-logged-out"); document.getElementById('formLoginArea').style.display = 'block'; document.getElementById('formRegisterArea').style.display = 'none';
+  } else {
+    body.classList.remove("is-logged-out"); document.getElementById("sideUserName").textContent = s.nama; document.getElementById("sideUserRole").textContent = s.role;
+    
+    document.getElementById("menuAdminArea").style.display = s.role === 'admin' ? 'block' : 'none';
+    document.getElementById("menuUserArea").style.display = s.role === 'user' ? 'block' : 'none';
+    
+    document.getElementById("adminDashboardView").style.display = s.role === 'admin' ? 'block' : 'none';
+    document.getElementById("userDashboardView").style.display = s.role === 'user' ? 'block' : 'none';
+    
+    document.getElementById("formPengaduanWarga").style.display = s.role === 'user' ? 'block' : 'none';
+    document.getElementById("titleTabelAduan").textContent = s.role === 'user' ? 'Riwayat Laporan Anda' : 'Daftar Aduan Masuk (Admin)';
+  }
+}
+
+/* =========================================================
+   GENERATE 35 DATA ACAK PER MODUL (SEEDING)
+   ========================================================= */
+function seedDemo(){
+  setData(LS_USERS, [
+    {nama:"Bapak Kepala Desa", nik:"1234567890", role:"admin", username:"admin", password:"admin123"},
+    {nama:"Ahmad Warga Demo", nik:"6301010000000001", role:"user", username:"user", password:"user123"}
+  ]);
+  
+  const firstNames = ["Budi", "Siti", "Ahmad", "Dewi", "Andi", "Rini", "Eko", "Sri", "Agus", "Wati", "Hendra", "Nur", "Wahyu", "Indah", "Rizky", "Ayu", "Ilham", "Dina", "Putra", "Ratna", "Tono", "Vina", "Gani", "Mira", "Hadi", "Tika", "Umar", "Siska", "Doni", "Lia", "Rudi", "Nia", "Yudi", "Sari", "Bayu"];
+  const lastNames = ["Saputra", "Wijaya", "Kusuma", "Lestari", "Setiawan", "Sari", "Nugroho", "Rahayu", "Pratama", "Handayani"];
+  const jks = ["Laki-laki", "Perempuan"];
+  const agamas = ["Islam", "Kristen", "Hindu", "Buddha"];
+  const kerjas = ["Petani", "Pedagang", "Wiraswasta", "PNS", "Buruh Harian", "Karyawan Swasta", "Mengurus Rumah Tangga"];
+  
+  let dPenduduk = [];
+  for(let i=0; i<35; i++){
+      let fn = firstNames[i % firstNames.length];
+      let ln = lastNames[Math.floor(Math.random()*lastNames.length)];
+      let nik = "630101" + String(1000000000 + i + 1).substring(1);
+      dPenduduk.push({
+          nik: nik, nama: fn + " " + ln, jk: jks[i%2], ttl:`Banjarmasin, 01-01-19${60+(i%30)}`, 
+          agama: agamas[Math.floor(Math.random()*agamas.length)], kerja: kerjas[Math.floor(Math.random()*kerjas.length)], alamat:`Jl. Manggis RT 0${(i%5)+1} RW 01`
+      });
+  }
+  setData(LS_PENDUDUK, dPenduduk);
+
+  const types = ["Surat Keterangan Domisili", "Surat Pengantar", "Surat Keterangan Tidak Mampu", "Surat Keterangan Usaha"];
+  let dApps = [];
+  for(let i=0; i<35; i++){
+      dApps.push({
+          no:"PL-20260401-"+String(i+1).padStart(3,"0"), 
+          jenis: types[i%4], nama: dPenduduk[i].nama, nik: dPenduduk[i].nik, alamat: dPenduduk[i].alamat,
+          status: i < 20 ? "Selesai" : "Dalam Proses", 
+          tglPengajuan: "2026-04-01", owner: i===1 ? "user" : "warga_lain", 
+          tglUpdate: nowISODate(), tglSelesai: i < 20 ? nowISODate() : "",
+          tujuan: "Keperluan melengkapi administrasi warga.", komentarAdmin: i < 20 ? "Disetujui dan diterbitkan." : "Menunggu admin desa.",
+          dokName: "KTP_KK_Berkas.jpg"
+      });
+  }
+  setData(LS_APPS, dApps);
+
+  let dAduan = [], dBansos = [], dSurat = [];
+  for(let i=0; i<32; i++){
+      dAduan.push({tgl: nowISODate(), pelapor: dPenduduk[i].nama, owner: i===1 ? "user" : "warga_lain", judul: "Laporan Fasilitas Publik "+(i+1), deskripsi: "Terdapat kerusakan pada fasilitas umum lingkungan.", fotoName:"bukti_laporan.jpg"});
+      dBansos.push({nik: dPenduduk[i].nik, nama: dPenduduk[i].nama, jenis: i%2===0 ? "BLT Dana Desa" : "Sembako", periode: "April 2026", ket: "Selesai disalurkan"});
+      dSurat.push({kategori: i%2===0?"Surat Masuk":"Surat Keluar", no: "SRT/00"+(i+1)+"/2026", tgl: nowISODate(), pihak: "Kecamatan Tamban", perihal: "Koordinasi Rutin Desa"});
+  }
+  setData(LS_PENGADUAN, dAduan); setData(LS_BANSOS, dBansos); setData(LS_SURAT, dSurat);
+  
+  setData(LS_LOGS, []);
+  setSession(null); alert("Reset & Generate 35+ Data Acak Berhasil!"); refreshUIState(); go("login");
+}
+
+/* =========================================================
+   DASHBOARD CARD ADMIN & USER
+   ========================================================= */
+function refreshDashboard(){
+  const s = getSession();
+  
+  document.getElementById("jumlahPenduduk").textContent = getData(LS_PENDUDUK).length;
+  
+  if(s?.role === 'admin') {
+      const pendingCount = getData(LS_APPS).filter(a => a.status === "Dalam Proses").length;
+      document.getElementById("adminPendingCount").textContent = pendingCount;
+  }
+  
+  if(s?.role === 'user') {
+    const apps = getData(LS_APPS).filter(a => a.owner === s.username).slice(0, 3);
+    const content = document.getElementById("dashTrackingContent");
+    
+    if(apps.length > 0){
+      content.innerHTML = apps.map(a => `
+        <div style="border-left:4px solid var(--primary); margin-bottom:12px; background:#f8fafc; padding:12px 12px 12px 15px; border-radius:0 8px 8px 0; border:1px solid #e2e8f0; border-left-width:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b style="color:var(--primary-dark); font-size:14px;">${a.jenis}</b>
+            ${badgeHTML(a.status)}
+          </div>
+          <div style="font-size:12px; color:var(--muted); margin-top:5px;">No: <b>${a.no}</b> | Diupdate: ${a.tglUpdate}</div>
+          <div style="font-size:13px; margin-top:8px; padding:6px; background:#fff; border-radius:4px; border:1px dashed #cbd5e1;">
+            <b>Catatan Desa:</b> ${a.komentarAdmin || 'Menunggu petugas desa.'}
+          </div>
+        </div>
+      `).join("");
+    } else {
+      content.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted); font-size:14px;">Anda belum memiliki pengajuan surat apa pun.</div>`;
+    }
+  }
+}
+
+/* =========================================================
+   FUNGSI OVERLAY GAMBAR (PENGADUAN & VERIFIKASI)
+   ========================================================= */
+function viewImage(base64Str, title) {
+    document.getElementById("imagePreviewTitle").textContent = title || "Preview Lampiran";
+    document.getElementById("imagePreviewImg").src = base64Str;
+    document.getElementById("imagePreviewOverlay").style.display = "flex";
+}
+function closeImagePreview() {
+    document.getElementById("imagePreviewOverlay").style.display = "none";
+    document.getElementById("imagePreviewImg").src = "";
+}
+
+/* =========================================================
+   MODUL INPUT & REPORT (Khusus Admin)
+   ========================================================= */
+function savePenduduk(e){
+  e.preventDefault(); const nik = document.getElementById("pdNik").value.trim(), nama = document.getElementById("pdNama").value.trim(), jk = document.getElementById("pdJK").value, tempat = document.getElementById("pdTempat").value.trim(), tglLahir = document.getElementById("pdTglLahir").value, agama = document.getElementById("pdAgama").value, kerja = document.getElementById("pdKerja").value.trim(), alamat = document.getElementById("pdAlamat").value.trim();
+  if(!nik || !nama){ showMsg("pdMsg","⚠️ NIK dan Nama wajib diisi.", true); return; }
+  const data = getData(LS_PENDUDUK); data.unshift({nik, nama, jk, ttl:`${tempat}, ${tglLahir}`, agama, kerja, alamat}); setData(LS_PENDUDUK, data); 
+  showMsg("pdMsg","✅ Data Penduduk Tersimpan."); 
+  // Clear form
+  document.getElementById("pdNik").value = ""; document.getElementById("pdNama").value = "";
+}
+function renderPenduduk(){ 
+    const tbody = document.getElementById("pendudukTable"); if(!tbody) return; 
+    tbody.innerHTML = getData(LS_PENDUDUK).map(d => `<tr><td>${d.nik}</td><td><b>${d.nama}</b></td><td>${d.jk}</td><td>${d.agama}</td><td>${d.kerja}</td><td>${d.alamat}</td></tr>`).join("") || `<tr><td colspan="6" style="text-align:center;">Data kosong.</td></tr>`; 
+}
+
+function autofillBansos() {
+    const nikInput = document.getElementById("bsNik").value.trim();
+    const bsNama = document.getElementById("bsNama");
+    const pendudukList = getData(LS_PENDUDUK);
+    const found = pendudukList.find(p => p.nik === nikInput);
+    bsNama.value = found ? found.nama : "";
+}
+function saveBansos(e){
+  e.preventDefault(); const nik = document.getElementById("bsNik").value.trim(), nama = document.getElementById("bsNama").value.trim(), jenis = document.getElementById("bsJenis").value, periode = document.getElementById("bsPeriode").value.trim(), ket = document.getElementById("bsKet").value.trim();
+  if(!nik || !nama){ showMsg("bsMsg","⚠️ Pastikan NIK ada di master data agar nama terisi otomatis.", true); return; }
+  const data = getData(LS_BANSOS); data.unshift({nik, nama, jenis, periode, ket}); setData(LS_BANSOS, data); 
+  showMsg("bsMsg","✅ Data Bansos Disimpan.");
+  document.getElementById("bsNik").value = ""; document.getElementById("bsNama").value = "";
+}
+function renderBansos(){ 
+    const tbody = document.getElementById("bansosTable"); if(!tbody) return; 
+    tbody.innerHTML = getData(LS_BANSOS).map(d => `<tr><td><b>${d.nama}</b></td><td>${d.nik}</td><td><span class="badge b-ok">${d.jenis}</span></td><td>${d.periode}</td><td>${d.ket}</td></tr>`).join("") || `<tr><td colspan="5" style="text-align:center;">Data kosong.</td></tr>`; 
+}
+
+function saveSurat(e){
+  e.preventDefault(); const kategori = document.getElementById("smkKategori").value, no = document.getElementById("smkNo").value.trim(), tgl = document.getElementById("smkTgl").value, pihak = document.getElementById("smkPihak").value.trim(), perihal = document.getElementById("smkPerihal").value.trim();
+  if(!no || !pihak){ showMsg("smkMsg","⚠️ Lengkapi No Surat dan Pihak.", true); return; }
+  const data = getData(LS_SURAT); data.unshift({kategori, no, tgl, pihak, perihal}); setData(LS_SURAT, data); 
+  showMsg("smkMsg","✅ Arsip Surat Disimpan."); 
+  document.getElementById("smkNo").value = ""; document.getElementById("smkPerihal").value = "";
+}
+function renderSurat(){ 
+    const tbody = document.getElementById("suratTable"); if(!tbody) return; 
+    tbody.innerHTML = getData(LS_SURAT).map(d => `<tr><td><span class="badge ${d.kategori==='Surat Masuk'?'b-ok':'b-warn'}">${d.kategori}</span></td><td>${d.no}</td><td>${d.tgl}</td><td>${d.pihak}</td><td>${d.perihal}</td></tr>`).join("") || `<tr><td colspan="5" style="text-align:center;">Arsip kosong.</td></tr>`; 
+}
+
+function saveUser(e){ 
+    e.preventDefault(); const u=getData(LS_USERS); 
+    u.push({nama:document.getElementById("rNama").value, nik:document.getElementById("rNik").value, role:document.getElementById("rRole").value, username:document.getElementById("rUser").value, password:document.getElementById("rPass").value}); 
+    setData(LS_USERS, u); showMsg("regMsg","✅ Akun Tersimpan.");
+    document.getElementById("rNama").value=""; document.getElementById("rUser").value="";
+}
+function renderUsers(){ 
+    const tbody = document.getElementById("userTable"); if(!tbody) return;
+    tbody.innerHTML = getData(LS_USERS).map(u => `<tr><td>${u.nama}</td><td>${u.nik}</td><td><span class="badge ${u.role==='admin'?'b-ok':'b-gray'}">${u.role}</span></td><td>${u.username}</td></tr>`).join(""); 
+}
+
+/* =========================================================
+   MODUL PENGAJUAN SURAT (USER) 
+   ========================================================= */
+function updateSyarat() {
+    const val = document.getElementById("pJenis").value;
+    const hint = document.getElementById("pDokHint");
+    if (val === "Surat Keterangan Tidak Mampu") {
+        hint.innerHTML = "<b>Syarat Wajib:</b> Upload Foto/Scan KTP, KK, dan <b>Foto Fisik Rumah</b> Anda.";
+    } else if (val === "Surat Keterangan Usaha") {
+        hint.innerHTML = "<b>Syarat Wajib:</b> Upload Foto/Scan KTP, KK, dan <b>Foto Tempat Usaha</b>.";
+    } else if (val) {
+        hint.innerHTML = "<b>Syarat Wajib:</b> Upload Foto KTP atau Scan KK Anda.";
+    } else {
+        hint.innerHTML = "Pilih jenis layanan untuk melihat syarat berkas yang wajib diupload.";
+    }
+}
+
+function makeNo(){
+  const d = new Date(), prefix = `PL-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  const apps = getData(LS_APPS).filter(a => a.no.startsWith(prefix)); return `${prefix}-${String(apps.length+1).padStart(3,"0")}`;
+}
+
+function prepPengajuan(){
+  document.getElementById("pTgl").value = nowISODate(); document.getElementById("pNo").value = makeNo();
+  const s = getSession(); document.getElementById("pDok").value = ""; updateSyarat();
+  if(s?.role==="user"){ 
+      const u = getData(LS_USERS).find(x => x.username===s.username); 
+      if(u){ document.getElementById("pNama").value = u.nama || ""; document.getElementById("pNik").value = u.nik || ""; document.getElementById("pAlamat").value = u.alamat || ""; } 
+  }
+}
+
+function submitPengajuan(e){
+  e.preventDefault(); const s = getSession(); if(!s) return;
+  const jenis = document.getElementById("pJenis").value, nama = document.getElementById("pNama").value.trim(), nik = document.getElementById("pNik").value.trim(), tujuan = document.getElementById("pTujuan").value.trim(), no = document.getElementById("pNo").value;
+  
+  if(!jenis || !nama || !nik || !tujuan){ alert("⚠️ Lengkapi Jenis Layanan, Tujuan, dll."); return; }
+  
+  const fileInput = document.getElementById("pDok");
+  if(fileInput.files.length === 0){ alert("⚠️ Anda WAJIB mengupload dokumen persyaratan."); return; }
+  
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(evt) {
+      const base64File = evt.target.result;
+      const apps = getData(LS_APPS);
+      apps.unshift({ 
+          no, jenis, nama, nik, alamat: document.getElementById("pAlamat").value.trim(), 
+          dokName: file.name, dokBase64: base64File, 
+          tujuan, tglPengajuan: document.getElementById("pTgl").value, owner: s.username, 
+          status: "Dalam Proses", tglUpdate: nowISODate(), komentarAdmin: "Berkas masuk, menunggu petugas desa."
+      });
+      setData(LS_APPS, apps); 
+      alert(`✅ Pengajuan Surat Berhasil!\n\nNomor Registrasi: ${no}\nSistem akan mengalihkan Anda ke Dashboard.`);
+      prepPengajuan(); 
+      go('dashboard');
+  };
+  reader.readAsDataURL(file);
+}
+
+/* =========================================================
+   PENGADUAN MASYARAKAT
+   ========================================================= */
+function submitPengaduan(e){
+  e.preventDefault(); const s = getSession(); if(!s) return;
+  const judul = document.getElementById("adJudul").value.trim(), deskripsi = document.getElementById("adDeskripsi").value.trim();
+  const fileFoto = document.getElementById("adFoto");
+  
+  if(!judul || !deskripsi){ alert("⚠️ Lengkapi judul dan deskripsi."); return; }
+  if(fileFoto.files.length === 0){ alert("⚠️ Anda WAJIB melampirkan FOTO BUKTI otentik."); return; }
+  
+  const file = fileFoto.files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(evt) {
+      const base64Foto = evt.target.result;
+      const data = getData(LS_PENGADUAN);
+      data.unshift({
+          tgl: nowISODate(), pelapor: s.nama, owner: s.username, 
+          judul, deskripsi, fotoName: file.name, fotoBase64: base64Foto
+      });
+      setData(LS_PENGADUAN, data); 
+      alert("✅ Pengaduan berhasil dikirim kepada pihak desa."); 
+      document.getElementById("adJudul").value = ""; document.getElementById("adDeskripsi").value = ""; document.getElementById("adFoto").value = "";
+      go('dashboard'); 
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPengaduan(){
+  const s = getSession(); 
+  const data = getData(LS_PENGADUAN); 
+  const tbody = document.getElementById("pengaduanTable"); if(!tbody) return;
+  
+  const filteredData = data.filter(d => s.role === 'admin' || d.owner === s.username);
+  
+  tbody.innerHTML = filteredData.map(d => {
+    let fotoBtn = d.fotoBase64 
+      ? `<button class="btn outline" style="font-size:11px; padding:4px 8px; margin-top:5px;" onclick="viewImage('${d.fotoBase64}', 'Bukti Foto: ${escapeHTML(d.judul)}')">📷 Lihat Foto</button>` 
+      : `<span style="color:var(--muted); font-size:11px;">Tidak ada</span>`;
+      
+    return `<tr>
+        <td>${d.tgl}</td>
+        <td><b>${d.judul}</b><br><small style="color:var(--muted)">Oleh: ${d.pelapor}</small></td>
+        <td>${fotoBtn}</td>
+        <td>${d.deskripsi}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="4" style="text-align:center;">Tidak ada data laporan.</td></tr>`;
+}
+
+/* =========================================================
+   VERIFIKASI & PENERBITAN OTOMATIS (ADMIN) 
+   ========================================================= */
+function renderVerList(){
+  const tbody = document.getElementById("verTable"); if(!tbody) return;
+  tbody.innerHTML = getData(LS_APPS).filter(a=>a.status==="Dalam Proses").map(a => `<tr style="cursor:pointer;" onclick="document.getElementById('vCariNo').value='${a.no}'; loadVerifikasi();"><td style="color:var(--primary); font-weight:bold;">${a.no}</td><td>${a.nama}</td><td>${badgeHTML(a.status)}</td></tr>`).join("") || `<tr><td colspan="3" style="text-align:center;">Semua pengajuan telah diproses.</td></tr>`;
+}
+
+function loadVerifikasi(){
+  hideMsg("verMsg"); const no = document.getElementById("vCariNo").value.trim(), a = getData(LS_APPS).find(x => x.no===no);
+  if(!a){ showMsg("verMsg","❌ Data tidak ditemukan.", true); return; }
+  
+  document.getElementById("vNo").value = a.no; document.getElementById("vNama").value = a.nama; 
+  document.getElementById("vStatusSet").value = ""; document.getElementById("vCat").value = "";
+  
+  const dokList = document.getElementById("vDokumenList");
+  if(a.dokBase64){
+      dokList.innerHTML = `📎 <b>${a.dokName}</b> <br>
+      <button type="button" class="btn outline" style="margin-top:8px; font-size:12px; padding:6px 12px; border-color:var(--primary); color:var(--primary-dark);" onclick="viewImage('${a.dokBase64}', 'Berkas Syarat: ${a.no}')">👁️ Tampilkan Berkas Warga</button>`;
+  } else {
+      dokList.innerHTML = `<span style="color:var(--muted);">${a.dokName || 'Dokumen Dummy (Demo)'}</span>`;
+  }
+}
+
+function saveVerifikasi(e){
+  e.preventDefault(); const no = document.getElementById("vNo").value.trim(), stat = document.getElementById("vStatusSet").value;
+  if(!no || !stat){ showMsg("verMsg","⚠️ Tarik data dan tentukan Keputusan terlebih dahulu.", true); return; }
+  
+  const apps = getData(LS_APPS), idx = apps.findIndex(x => x.no===no);
+  const tglSkg = nowISODate();
+  const catatanCat = document.getElementById("vCat").value;
+  
+  if(stat === "Disetujui"){
+      apps[idx].status = "Selesai";
+      apps[idx].tglSelesai = tglSkg;
+      apps[idx].tglUpdate = tglSkg;
+      apps[idx].komentarAdmin = catatanCat || "Dokumen Disetujui dan telah Diterbitkan. Silakan unduh PDF.";
+      apps[idx].verifikasi = {statusPersetujuan: "Disetujui", catatan: catatanCat, ttd: document.getElementById("vTTD").value};
+  } else {
+      apps[idx].status = "Ditolak";
+      apps[idx].tglUpdate = tglSkg;
+      apps[idx].komentarAdmin = catatanCat || "Berkas ditolak oleh petugas. Silakan perbaiki.";
+      apps[idx].verifikasi = {statusPersetujuan: "Ditolak", catatan: catatanCat};
+  }
+  
+  setData(LS_APPS, apps); showMsg("verMsg",`✅ Dokumen diproses. Status saat ini: <b>${apps[idx].status}</b>.`); renderVerList(); refreshDashboard();
+}
+
+/* =========================================================
+   CETAK / UNDUH PDF FORMAT PROFESIONAL BEDA KATEGORI
+   ========================================================= */
+function renderCetakTable(){
+  const tbody = document.getElementById("cetakTable"); if(!tbody) return;
+  const s = getSession();
+  const apps = getData(LS_APPS).filter(a => a.status==="Selesai" && a.owner===s?.username);
+  tbody.innerHTML = apps.map(a => `
+    <tr>
+      <td><b>${a.no}</b></td><td>${a.jenis}</td><td>${a.tglSelesai || "-"}</td>
+      <td><button class="btn ok" onclick="directDownloadPDF('${a.no}')">📥 Unduh PDF</button></td>
+    </tr>
+  `).join("") || `<tr><td colspan="4" style="text-align:center;">Belum ada dokumen yang diterbitkan.</td></tr>`;
+}
+
+function escapeHTML(s){ return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function getSuratTemplate(app){
+  // KOP SURAT (Konsisten)
+  const kop = `
+    <div class="center" style="margin-bottom:30px; text-align:center;">
+      <h3 style="margin:0; font-size:24px; text-transform:uppercase;">PEMERINTAH DESA JELAPAT 1</h3>
+      <p style="margin:5px 0;">Kecamatan Tamban, Kabupaten Barito Kuala</p>
+      <div class="line" style="border-top:3px solid #000; margin:10px 0 3px;"></div>
+      <div class="line2" style="border-top:1px solid #000;"></div>
+    </div>
+    <div class="center" style="margin-bottom:40px; text-align:center;">
+      <h4 style="margin:0; text-decoration:underline; font-size:18px; text-transform:uppercase;">${escapeHTML(app.jenis)}</h4>
+      <div style="font-size:14px;">Nomor Register: ${escapeHTML(app.no)}</div>
+    </div>
+  `;
+
+  // DATA DIRI
+  const dataDiri = `
+    <p style="text-align:justify; margin-bottom:20px;">Yang bertanda tangan di bawah ini Kepala Desa Jelapat 1, Kecamatan Tamban, Kabupaten Barito Kuala, menerangkan dengan sebenarnya bahwa:</p>
+    <table style="margin-left:40px; margin-bottom:20px; font-size:16px;">
+      <tr><td style="width:150px; padding:5px;">Nama Lengkap</td><td>: <b>${escapeHTML(app.nama)}</b></td></tr>
+      <tr><td style="padding:5px;">NIK</td><td>: ${escapeHTML(app.nik)}</td></tr>
+      <tr><td style="padding:5px;">Alamat</td><td>: ${escapeHTML(app.alamat)}</td></tr>
+    </table>
+  `;
+
+  // ISI BERBEDA SESUAI KATEGORI
+  let isi = "";
+  if(app.jenis === "Surat Keterangan Domisili") {
+      isi = `<p style="text-align:justify; margin-bottom:20px;">Orang tersebut di atas adalah benar-benar warga yang <b>berdomisili</b> di Desa Jelapat 1. Surat keterangan domisili ini diberikan sebagai persyaratan administrasi untuk keperluan: <b>${escapeHTML(app.tujuan)}</b>.</p>`;
+  } else if (app.jenis === "Surat Pengantar") {
+      isi = `<p style="text-align:justify; margin-bottom:20px;">Orang tersebut di atas bermaksud mengajukan permohonan <b>pengantar</b> untuk keperluan: <b>${escapeHTML(app.tujuan)}</b>. Demikian pengantar ini diberikan agar dapat difasilitasi ke instansi terkait.</p>`;
+  } else if (app.jenis === "Surat Keterangan Usaha") {
+      isi = `<p style="text-align:justify; margin-bottom:20px;">Berdasarkan pengamatan kami, menerangkan bahwa warga tersebut di atas benar-benar memiliki dan <b>menjalankan usaha</b> di wilayah Desa Jelapat 1 dengan bidang/tujuan: <b>${escapeHTML(app.tujuan)}</b>.</p>`;
+  } else if (app.jenis === "Surat Keterangan Tidak Mampu") {
+      isi = `<p style="text-align:justify; margin-bottom:20px;">Berdasarkan pendataan dan pengamatan kami, warga tersebut di atas termasuk dalam keluarga <b>prasejahtera (Kurang Mampu)</b>. Surat ini diberikan semata-mata untuk keperluan: <b>${escapeHTML(app.tujuan)}</b>.</p>`;
+  } else {
+      isi = `<p style="text-align:justify; margin-bottom:20px;">Surat keterangan ini diterbitkan secara resmi untuk keperluan: <b>${escapeHTML(app.tujuan)}</b>.</p>`;
+  }
+
+  // PENUTUP & TTD
+  const penutup = `
+    <p style="text-align:justify; margin-bottom:50px;">Demikian surat keterangan ini dibuat dengan sebenarnya agar dapat dipergunakan sebagaimana mestinya oleh pihak yang berkepentingan.</p>
+    <div style="display:flex; justify-content:flex-end;">
+        <div style="text-align:center; width:250px; float:right;">
+            <p style="margin:0;">Jelapat 1, ${app.tglSelesai||nowISODate()}</p>
+            <p style="margin:5px 0 80px;">Kepala Desa Jelapat 1</p>
+            <p style="margin:0; font-weight:bold; text-decoration:underline; text-transform:uppercase;">${escapeHTML(app.verifikasi?.ttd || "KADES JELAPAT 1")}</p>
+        </div>
+    </div>
+  `;
+
+  return kop + dataDiri + isi + penutup;
+}
+
+function directDownloadPDF(no){
+  const a = getData(LS_APPS).find(x => x.no === no); if(!a) return;
+  document.getElementById("suratCetak").innerHTML = getSuratTemplate(a);
+  const overlay = document.getElementById("previewOverlay");
+  overlay.style.display = "block"; 
+  setTimeout(() => { window.print(); overlay.style.display = "none"; }, 400);
+}
+
+/* =========================================================
+   LAPORAN & LOGS
+   ========================================================= */
+function renderLaporan(){
+  const s = getSession(); let apps = getData(LS_APPS); if(s && s.role === "user") apps = apps.filter(a => a.owner === s.username);
+  
+  document.getElementById("kpiTotal").textContent = apps.length;
+  document.getElementById("kpiAktif").textContent = apps.filter(a => a.status==="Dalam Proses").length;
+  document.getElementById("kpiAvg").textContent = apps.filter(a => a.status==="Selesai").length; 
+  
+  const tbody = document.getElementById("lapTable"); if(!tbody) return;
+  tbody.innerHTML = apps.map(a => `<tr><td>${a.no}</td><td>${a.nama}</td><td>${a.jenis}</td><td>${a.tglPengajuan}</td><td>${badgeHTML(a.status)}</td><td>${a.tglSelesai || "-"}</td></tr>`).join("") || `<tr><td colspan="6" style="text-align:center;">Kosong.</td></tr>`;
+}
+
+function renderLogs(){ 
+    const tbody = document.getElementById("logTable"); if(!tbody) return;
+    tbody.innerHTML = getData(LS_LOGS).map(l => `<tr><td><b>${l.user}</b></td><td><span class="badge ${l.role==='admin'?'b-ok':'b-gray'}">${l.role}</span></td><td>${l.waktu}</td></tr>`).join(""); 
+}
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+(function init(){ 
+    if(getData(LS_USERS).length===0) seedDemo(); 
+    refreshUIState(); 
+    const s = getSession(); 
+    if(s) go("dashboard"); else go("login"); 
+    updateClock();
+})();
+</script>
+</body>
+</html>
