@@ -24,12 +24,12 @@
     }
     
     *{box-sizing:border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif;}
-    body{margin:0; background:var(--bg); color:var(--text); display: flex; min-height: 100vh;}
+    body{margin:0; background:var(--bg); color:var(--text); display: flex; min-height: 100vh; overflow-x: hidden;}
 
     /* LAYOUT: SIDEBAR & MAIN CONTENT */
     #sidebar {
       width: 260px; background: var(--sidebar-bg); color: var(--sidebar-text);
-      display: flex; flex-direction: column; transition: 0.3s; position: fixed; height: 100vh; z-index: 20;
+      display: flex; flex-direction: column; transition: transform 0.3s ease; position: fixed; height: 100vh; z-index: 20;
     }
     #sidebar .brand { padding: 20px; background: var(--primary-dark); text-align: center; }
     #sidebar .brand h2 { margin: 0; font-size: 18px; color: #fff; }
@@ -45,7 +45,12 @@
     }
     #sidebar .user-info { padding: 15px 20px; background: rgba(0,0,0,0.2); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.1); }
 
-    #main-content { flex: 1; margin-left: 260px; display: flex; flex-direction: column; width: calc(100% - 260px); }
+    /* OVERLAY & HAMBURGER MENU */
+    #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 19; transition: 0.3s; opacity: 0;}
+    body.sidebar-open #sidebarOverlay { display: block; opacity: 1;}
+    #menuToggle { display: none; background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text); padding: 0 15px 0 0; outline:none;}
+
+    #main-content { flex: 1; margin-left: 260px; display: flex; flex-direction: column; width: calc(100% - 260px); transition: margin-left 0.3s ease, width 0.3s ease; }
 
     .topbar {
       background: #fff; padding: 15px 24px; display: flex; justify-content: space-between;
@@ -80,9 +85,21 @@
     .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
     .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    
+    /* RESPONSIVE MEDIA QUERIES */
     @media (max-width: 900px){ .grid4, .grid3 { grid-template-columns: repeat(2,1fr); } .grid2 { grid-template-columns: 1fr; } }
-    @media (max-width: 768px){ .form-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 600px){ .grid4, .grid3 { grid-template-columns: 1fr; } #sidebar { display:none;} #main-content { margin-left: 0; width: 100%; } }
+    @media (max-width: 768px){ 
+        .form-grid { grid-template-columns: 1fr; } 
+        #sidebar { transform: translateX(-100%); }
+        body.sidebar-open #sidebar { transform: translateX(0); }
+        #main-content { margin-left: 0; width: 100%; }
+        #menuToggle { display: block; }
+        .topbar { padding: 15px 20px; }
+    }
+    @media (max-width: 600px){ 
+        .grid4, .grid3 { grid-template-columns: 1fr; } 
+        .topbar .time-widget { font-size: 11px; padding: 4px 8px; }
+    }
 
     label { font-size: 13px; color: #4b5563; margin-bottom: 6px; display: block; font-weight: 600; }
     input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; outline: none; background: #fff; transition: border-color 0.2s; }
@@ -121,9 +138,14 @@
 
     /* TABS UNTUK REPORT DATA */
     .tab-header { display: flex; background: var(--primary); color: #fff; border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
-    .tab-header .tab { padding: 14px 20px; cursor: pointer; font-weight: 600; font-size: 14px; opacity: 0.8; transition: 0.2s; border-bottom: 3px solid transparent; }
+    .tab-header .tab { padding: 14px 20px; cursor: pointer; font-weight: 600; font-size: 14px; opacity: 0.8; transition: 0.2s; border-bottom: 3px solid transparent; flex: 1; text-align: center;}
     .tab-header .tab:hover { opacity: 1; background: rgba(255,255,255,0.1); }
     .tab-header .tab.active { opacity: 1; background: var(--primary-dark); border-bottom: 3px solid var(--ok); }
+    @media (max-width: 600px){
+        .tab-header { flex-direction: column; border-radius: var(--radius); }
+        .tab-header .tab { border-bottom: none; border-left: 3px solid transparent; text-align: left;}
+        .tab-header .tab.active { border-bottom: none; border-left: 3px solid var(--ok); }
+    }
 
     /* PREVIEW OVERLAYS */
     #previewOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;padding:20px;overflow:auto}
@@ -136,15 +158,16 @@
       #previewOverlay{position:fixed; left:0; top:0; width:100%; height:100%; background:none; padding:0; overflow: visible;}
       #previewCard{box-shadow:none;border-radius:0; margin:0; padding:0;}
       #previewActions{display:none !important}
-      /* Ensure printed tables from reports look neat */
       #suratCetak table { width:100%; border-collapse: collapse; margin-top: 20px; font-family: Arial, sans-serif;}
       #suratCetak th, #suratCetak td { border: 1px solid #333; padding: 8px; font-size: 12px; }
-      #suratCetak th { background-color: #f0f0f0 !important; -webkit-print-color-adjus: exact; }
+      #suratCetak th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
     }
   </style>
 </head>
 
 <body class="is-logged-out">
+
+  <div id="sidebarOverlay" onclick="toggleSidebar(true)"></div>
 
   <aside id="sidebar">
     <div class="brand">
@@ -191,7 +214,10 @@
   <main id="main-content">
     
     <header class="topbar">
-      <h3 id="pageTitle">Dashboard</h3>
+      <div style="display:flex; align-items:center;">
+        <button id="menuToggle" onclick="toggleSidebar()">☰</button>
+        <h3 id="pageTitle">Dashboard</h3>
+      </div>
       <div class="time-widget" id="realTimeClock">Memuat Waktu...</div>
     </header>
 
@@ -676,6 +702,17 @@
 
 <script>
 /* =========================================================
+   FUNGSI UNTUK MENGATUR SIDEBAR MENU DI HP
+   ========================================================= */
+function toggleSidebar(forceClose = false) {
+    if(forceClose) {
+        document.body.classList.remove('sidebar-open');
+    } else {
+        document.body.classList.toggle('sidebar-open');
+    }
+}
+
+/* =========================================================
    JAM DIGITAL REAL-TIME
    ========================================================= */
 function updateClock() {
@@ -734,7 +771,6 @@ function exportTableToCSV(tableId, filename) {
     for (let i = 0; i < rows.length; i++) {
         let row = [], cols = rows[i].querySelectorAll("td, th");
         for (let j = 0; j < cols.length; j++) {
-            // Hilangkan enter dan quote ganda agar CSV tidak rusak
             let text = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""').trim();
             row.push('"' + text + '"');
         }
@@ -790,6 +826,9 @@ function go(page){
   
   const userOnly = ["pengajuan", "cetak"];
   if(userOnly.includes(page) && s?.role === "admin"){ alert("Halaman ini khusus masyarakat (User)."); page = "dashboard"; return;}
+
+  // Tutup sidebar setelah menu dipilih (saat di mode HP)
+  toggleSidebar(true);
 
   document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
   document.getElementById(page).classList.add("active");
@@ -850,9 +889,16 @@ function doLogin(e){
   const logs = getData(LS_LOGS); logs.unshift({user: found.nama, role: found.role, waktu: nowText()}); setData(LS_LOGS, logs);
   refreshUIState(); go("dashboard");
 }
-function logout(){ setSession(null); refreshUIState(); go("login"); }
+function logout(){ 
+  setSession(null); 
+  refreshUIState(); 
+  go("login"); 
+}
 
 function refreshUIState(){
+  // Pastikan sidebar tertutup saat merefresh state
+  toggleSidebar(true);
+
   const s = getSession(); const body = document.body;
   if(!s){
     body.classList.add("is-logged-out"); document.getElementById('formLoginArea').style.display = 'block'; document.getElementById('formRegisterArea').style.display = 'none';
