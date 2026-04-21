@@ -161,6 +161,7 @@
       #suratCetak table { width:100%; border-collapse: collapse; margin-top: 20px; font-family: Arial, sans-serif;}
       #suratCetak th, #suratCetak td { border: 1px solid #333; padding: 8px; font-size: 12px; }
       #suratCetak th { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+      #suratCetak .btn { display: none !important; } /* Sembunyikan tombol saat print PDF */
     }
   </style>
 </head>
@@ -432,6 +433,7 @@
         <div class="card" style="padding:0; overflow:hidden;">
             <div class="tab-header">
                 <div class="tab active" onclick="switchReportTab(event, 'rep-penduduk')">👥 Data Penduduk</div>
+                <div class="tab" onclick="switchReportTab(event, 'rep-pengajuan')">📝 Data Pengajuan</div>
                 <div class="tab" onclick="switchReportTab(event, 'rep-bansos')">🎁 Data Bansos</div>
                 <div class="tab" onclick="switchReportTab(event, 'rep-surat')">✉️ Agenda Surat</div>
                 <div class="tab" onclick="switchReportTab(event, 'rep-akun')">⚙️ Data Akun</div>
@@ -450,6 +452,22 @@
                         <table id="tblPenduduk">
                             <thead><tr><th>NIK</th><th>Nama Lengkap</th><th>L/P</th><th>Agama</th><th>Pekerjaan</th><th>Alamat</th></tr></thead>
                             <tbody id="pendudukTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="rep-pengajuan" class="rep-tab" style="display:none;">
+                    <div class="headerline">
+                        <h2>Tabel Master Pengajuan Surat Warga</h2>
+                        <div>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblRepPengajuan', 'Laporan_Pengajuan_Surat')">⬇️ Excel</button>
+                            <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblRepPengajuan', 'Laporan Master Pengajuan Surat')">🖨️ PDF</button>
+                        </div>
+                    </div>
+                    <div style="overflow:auto; max-height:600px;">
+                        <table id="tblRepPengajuan">
+                            <thead><tr><th>No Registrasi</th><th>Tgl Pengajuan</th><th>Pemohon</th><th>Jenis Layanan</th><th>Status</th><th>Catatan</th></tr></thead>
+                            <tbody id="repPengajuanTable"></tbody>
                         </table>
                     </div>
                 </div>
@@ -632,9 +650,15 @@
         </div>
 
         <div class="card">
-          <div class="headerline"><h2 id="titleTabelAduan">Laporan Terkirim</h2></div>
+          <div class="headerline">
+            <h2 id="titleTabelAduan">Laporan Terkirim</h2>
+            <div id="aduanAdminActions" style="display:none;">
+               <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="exportTableToCSV('tblPengaduan', 'Laporan_Aduan_Warga')">⬇️ Excel</button>
+               <button class="btn outline" style="font-size:12px; padding:6px 12px;" onclick="printTable('tblPengaduan', 'Laporan Pengaduan Warga')">🖨️ PDF</button>
+            </div>
+          </div>
           <div style="overflow:auto">
-            <table>
+            <table id="tblPengaduan">
               <thead><tr><th>Tanggal</th><th>Judul & Pelapor</th><th>Bukti Lampiran</th><th>Deskripsi</th></tr></thead>
               <tbody id="pengaduanTable"></tbody>
             </table>
@@ -850,6 +874,7 @@ function go(page){
   
   if(page==="report") {
       renderPenduduk();
+      renderRepPengajuan(); // Tab baru pengajuan surat
       renderBansos();
       renderSurat();
       renderUsers();
@@ -913,6 +938,9 @@ function refreshUIState(){
     
     document.getElementById("formPengaduanWarga").style.display = s.role === 'user' ? 'block' : 'none';
     document.getElementById("titleTabelAduan").textContent = s.role === 'user' ? 'Riwayat Laporan Anda' : 'Daftar Aduan Masuk (Admin)';
+    
+    // Tampilkan tombol unduh Aduan hanya untuk admin
+    document.getElementById("aduanAdminActions").style.display = s.role === 'admin' ? 'block' : 'none';
   }
 }
 
@@ -1033,6 +1061,22 @@ function savePenduduk(e){
 function renderPenduduk(){ 
     const tbody = document.getElementById("pendudukTable"); if(!tbody) return; 
     tbody.innerHTML = getData(LS_PENDUDUK).map(d => `<tr><td>${d.nik}</td><td><b>${d.nama}</b></td><td>${d.jk}</td><td>${d.agama}</td><td>${d.kerja}</td><td>${d.alamat}</td></tr>`).join("") || `<tr><td colspan="6" style="text-align:center;">Data kosong.</td></tr>`; 
+}
+
+// Fungsi render data pengajuan di dalam Report Master Data
+function renderRepPengajuan(){
+    const tbody = document.getElementById("repPengajuanTable"); if(!tbody) return;
+    const apps = getData(LS_APPS);
+    tbody.innerHTML = apps.map(a => `
+        <tr>
+            <td><b>${a.no}</b></td>
+            <td>${a.tglPengajuan}</td>
+            <td>${a.nama}</td>
+            <td>${a.jenis}</td>
+            <td>${badgeHTML(a.status)}</td>
+            <td>${a.komentarAdmin || '-'}</td>
+        </tr>
+    `).join("") || `<tr><td colspan="6" style="text-align:center;">Data kosong.</td></tr>`;
 }
 
 function autofillBansos() {
